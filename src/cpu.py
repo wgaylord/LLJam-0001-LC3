@@ -33,3 +33,13 @@ class DataBusInterface:
             print('Timed out, no more responses from DataBus!')
             return False
 
+
+class CPU:
+    def __init__(self):
+        self.bus = DataBusInterface()
+        self.PC = 0
+        self.registers = array.array([])
+
+    def tick(self):
+        pass
+

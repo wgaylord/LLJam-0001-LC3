@@ -23,16 +23,21 @@ class Device(threading.Thread):
         mreq = struct.pack('4sL', group, socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     
-    def run(self):
+    def run(self): #Allow run to be over-riden so devices can have their own loops. (Pygame based Display / Keyboard input device is an example.)
         while self.running:
-            data, sock_address = self.sock.recvfrom(10)
-            unpacked_data = struct.unpack('?HB',data) #Format is Bool for read or write, 16-bit address, 8-bit data 
-            if unpacked_data[1] >= self.loc and unpacked_data[1] < (self.loc+self.size):
-                if unpacked_data[0]:
-                    self.sock.sendto(struct.pack('B', self.read(unpacked_data[1])),sock_address) #Always returns a byte
-                else:
-                    self.sock.sendto(struct.pack('B', self.write(unpacked_data[1],data)), sock_address) #Always returns a byte
-            
+            self.handleUDP()
+
+    def handleUDP(self):
+        data, sock_address = self.sock.recvfrom(10)
+        unpacked_data = struct.unpack('?HB',data) #Format is Bool for read or write, 16-bit address, 8-bit data 
+        if unpacked_data[1] >= self.loc and unpacked_data[1] < (self.loc+self.size):
+            if unpacked_data[0]:
+                self.sock.sendto(struct.pack('B', self.read(unpacked_data[1])),sock_address) #Always returns a byte
+            else:
+                self.sock.sendto(struct.pack('B', self.write(unpacked_data[1],data)), sock_address) #Always returns a byte
+    
+    
+       
     def read(self,address):
         return 0
     
