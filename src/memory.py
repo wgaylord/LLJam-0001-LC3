@@ -2,6 +2,7 @@ import socket
 import struct
 import threading
 import argparse
+from device import Device
 from array import array
 
 
@@ -10,76 +11,28 @@ server_address = ('', 10000)
 
 
 
-class RAM(threading.Thread):
+class RAM(Device):
     def __init__(self,loc=0,size=2**16):
-        threading.Thread.__init__(self)
-        self.loc = loc
-        self.size = size
-        self.running = True
+        Device.__init__(self,loc,size)
         self.storage = array('B',[0]*size)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(server_address)
+    def read(self,address):
+        return self.storage[unpacked_data[1]-self.loc]
 
-        # Tell the operating system to add the socket to the multicast group
-        # on all interfaces.
-        group = socket.inet_aton(multicast_group)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
-        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    
-    def run(self):
-        while self.running:
-            data, address = self.sock.recvfrom(10)
-            print('Got request.')
-            unpacked_data = struct.unpack('?HB',data) #Format is Bool for read or write, 16-bit address, 8-bit data
-           
-            if unpacked_data[1] >= self.loc and unpacked_data[1] < (self.loc+self.size):
-                if unpacked_data[0]:
-                    print('Its a read!')
-                    print('Reading address',unpacked_data[1])
-                    self.sock.sendto(struct.pack('B', self.storage[unpacked_data[1]-self.loc]),address) #Always returns a byte
-                else:
-                    print('Its a write!')
-                    print('Writing',unpacked_data[2],"to address",unpacked_data[1])
-                    self.storage[unpacked_data[1]-self.loc] = unpacked_data[2]
-                    self.sock.sendto(struct.pack('B', self.storage[unpacked_data[1]-self.loc]), address) #Always returns a byte
+    def write(self,address,data):
+        self.storage[address-self.loc] = data
+        return self.storage[unpacked_data[1]-self.loc]
             
-    def stop(self):
-        self.running = False
-            
-class ROM(threading.Thread):
+class ROM(Device):
     def __init__(self,loc=0,data = []):
-        threading.Thread.__init__(self)
-        self.loc = loc
-        self.size = len(data)
-        self.running = True
+        Device.__init__(self,loc,len(data))
         self.storage = array('B',data)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(server_address)
 
-        # Tell the operating system to add the socket to the multicast group
-        # on all interfaces.
-        group = socket.inet_aton(multicast_group)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
-        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    def read(self,address):
+        return self.storage[unpacked_data[1]-self.loc]
 
+    def write(self,address,data):
+        return 0
 
-
-    
-    def run(self):
-        while self.running:
-            data, address = self.sock.recvfrom(4)
-            print('Got request.')
-            unpacked_data = struct.unpack('?HB',data)
-            if unpacked_data[1] >= self.loc and unpacked_data[1] < (self.loc+self.size):
-                if unpacked_data[0]:
-                    print('Its a read!')
-                    print('Reading address',unpacked_data[1])
-                    self.sock.sendto(struct.pack('B',self.storage[unpacked_data[1]-self.loc]),address)
-            
-    def stop(self):
-        self.running = False
 
 
 if __name__ == "__main__":
