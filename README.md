@@ -13,4 +13,5 @@ This implementation uses UDP Multicast packets as the system bus between the CPU
 
 [State Machine as defined by the creator of the LC-3 / LC-3b](https://web.archive.org/web/20081008155158/https://users.ece.utexas.edu/~patt/07s.360N/handouts/state_fixed.pdf)
 
+[Website for the textbook based around the LC-3](https://highered.mheducation.com/sites/0072467509/student_view0/index.html)
 
